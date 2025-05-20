@@ -2,6 +2,8 @@ const board = document.querySelector(".chess_board"); // получение до
 const text = document.querySelector(".text"); // текст для ходов
 const whiteChess = document.querySelector(".chess-white"); // для вида какие фигуры съели
 const blackChess = document.querySelector(".chess-black"); // для вида какие фигуры съели
+const textAlpha = document.querySelector(".text-alpha"); // для вида какие фигуры съели
+const textNum = document.querySelector(".text-num"); // для вида какие фигуры съели
 
 const chessList = {};
 const chesses = ["king", "bishop", "knight", "pawn", "queen", "rook"];
@@ -15,6 +17,22 @@ let stepToggle = true; // ходят черные
 let figura = null;
 let currentCol = null;
 let currentRow = null;
+
+let lightMoves = []; // для сбора подсвтеки ходов
+
+//для добавления съеденых фигур
+function addEatFigura(pathBoolean, figura) {
+  if (pathBoolean) {
+    blackChess.appendChild(figura)
+  } else {
+    whiteChess.appendChild(figura);
+  }
+}
+// смена текста
+function updateText() {
+  text.textContent = `Ходят ${stepToggle ? 'белые' : 'черные'}`
+}
+updateText();
 
 //получение изображений
 chesses.forEach((chess) => {
@@ -116,17 +134,42 @@ boardCell.forEach((blocks, indexColumn) => {
       const newCol = indexColumn; // текущий столбец
       const newRow = indexRow; // текущая строка
 
-      if (!figura) {
-        // проврека содержания фигуры и добавление в глобаные переменные для сохранения
-        if (cell.firstChild) {
-          const img = cell.querySelector("img");
-          const currentColor = img.src.includes("black"); // текущий цвет фигуры
-          // проверка текущего цвета и цвета, который ходит
+      clearLight();
 
+      // для выбора новой фигуры того же цвета
+      if (figura && cell.firstChild) {
+        const newFigura = cell.querySelector("img");
+        const currentColor = newFigura.src.includes("black"); // текущий цвет фигуры
+        if (
+          newFigura.src.includes(currentColor) ===
+          figura.src.includes(currentCol)
+        ) {
+          if (currentColor != stepToggle) {
+            figura.classList.remove("active-chess");
+            newFigura.classList.add("active-chess"); //добавляю класс к фигуре
+            figura = newFigura;
+            currentCol = newCol;
+            currentRow = newRow;
+
+            logicOnClick(newFigura, newCol, newRow);
+          }
+        }
+      }
+
+      // проврека содержания фигуры и добавление в глобаные переменные для сохранения
+      if (!figura && cell.firstChild) {
+        const img = cell.querySelector("img");
+        const currentColor = img.src.includes("black"); // текущий цвет фигуры
+
+        // проверка хода
+        if (currentColor !== stepToggle) {
+          // проверка текущего цвета и цвета, который ходит
           img.classList.add("active-chess"); //добавляю класс к фигуре
           figura = img;
-          currentCol = indexColumn;
-          currentRow = indexRow;
+          currentCol = newCol;
+          currentRow = newRow;
+
+          logicOnClick(figura, newCol, newRow);
         }
       }
 
@@ -136,46 +179,235 @@ boardCell.forEach((blocks, indexColumn) => {
         if (figura?.src.includes("pawn")) {
           stepPawn(newCol, newRow);
         }
+
+        // логика для ладьи
+        if (figura?.src.includes("rook")) {
+          stepRookBishopQueen(
+            newCol,
+            newRow,
+            (direction = [
+              { col: 1, row: 0 },
+              { col: -1, row: 0 },
+              { col: 0, row: 1 },
+              { col: 0, row: -1 },
+            ])
+          );
+        }
+
+        // логика для ладьи
+        if (figura?.src.includes("bishop")) {
+          stepRookBishopQueen(
+            newCol,
+            newRow,
+            (direction = [
+              { col: -1, row: 1 },
+              { col: 1, row: 1 },
+              { col: 1, row: -1 },
+              { col: -1, row: -1 },
+            ])
+          );
+        }
+
+        // логика для ладьи
+        if (figura?.src.includes("queen")) {
+          stepRookBishopQueen(
+            newCol,
+            newRow,
+            (direction = [
+              { col: -1, row: 1 },
+              { col: 1, row: 1 },
+              { col: 1, row: -1 },
+              { col: -1, row: -1 },
+              { col: 1, row: 0 },
+              { col: -1, row: 0 },
+              { col: 0, row: 1 },
+              { col: 0, row: -1 },
+            ])
+          );
+        }
+
+        // логика для коня
+        if (figura?.src.includes("knight")) {
+          stepKnightKing(
+            newCol,
+            newRow,
+            (direction = [
+              { col: 2, row: 1 },
+              { col: 2, row: -1 },
+              { col: -2, row: 1 },
+              { col: -2, row: -1 },
+              { col: 1, row: 2 },
+              { col: -1, row: 2 },
+              { col: 1, row: -2 },
+              { col: -1, row: -2 },
+            ])
+          );
+        }
+
+        if (figura?.src.includes("king")) {
+          stepKnightKing( 
+            newCol, newRow,
+            (direction = [
+              { col: -1, row: 1 },
+              { col: 1, row: 1 },
+              { col: 1, row: -1 },
+              { col: -1, row: -1 },
+              { col: 1, row: 0 },
+              { col: -1, row: 0 },
+              { col: 0, row: 1 },
+              { col: 0, row: -1 },
+            ])
+          );
+        }
       }
-      console.log(figura)
     });
   });
 });
 
-function lightStep(col, row) {
-  boardCell[col][row].classList.add("active-block");
+function logicOnClick(figura, newCol, newRow) {
+  if (figura.src.includes("pawn")) {
+    lightPawn(newCol, newRow);
+  }
+
+  if (figura.src.includes("rook")) {
+    highLightMoves(
+      (direction = [
+        { col: 1, row: 0 },
+        { col: -1, row: 0 },
+        { col: 0, row: 1 },
+        { col: 0, row: -1 },
+      ])
+    );
+  }
+
+  if (figura.src.includes("bishop")) {
+    highLightMoves(
+      (direction = [
+        { col: -1, row: 1 },
+        { col: 1, row: 1 },
+        { col: 1, row: -1 },
+        { col: -1, row: -1 },
+      ])
+    );
+  }
+
+  if (figura.src.includes("queen")) {
+    highLightMoves(
+      (direction = [
+        { col: -1, row: 1 },
+        { col: 1, row: 1 },
+        { col: 1, row: -1 },
+        { col: -1, row: -1 },
+        { col: 1, row: 0 },
+        { col: -1, row: 0 },
+        { col: 0, row: 1 },
+        { col: 0, row: -1 },
+      ])
+    );
+  }
+
+  if (figura.src.includes("knight")) {
+    highLightKnightKing(
+      (direction = [
+        { col: 2, row: 1 },
+        { col: 2, row: -1 },
+        { col: -2, row: 1 },
+        { col: -2, row: -1 },
+        { col: 1, row: 2 },
+        { col: -1, row: 2 },
+        { col: 1, row: -2 },
+        { col: -1, row: -2 },
+      ])
+    );
+  }
+
+  if (figura.src.includes("king")) {
+    highLightKnightKing(
+      (direction = [
+        { col: -1, row: 1 },
+        { col: 1, row: 1 },
+        { col: 1, row: -1 },
+        { col: -1, row: -1 },
+        { col: 1, row: 0 },
+        { col: -1, row: 0 },
+        { col: 0, row: 1 },
+        { col: 0, row: -1 },
+      ])
+    );
+  }
+
+  lightStep();
 }
 
-function stepPawn(newCol, newRow) {
+// функция для подсветки, пробегаюсь по ктекам и добавляю к ним класс
+function lightStep() {
+  lightMoves.forEach((block) => {
+    block.classList.add("active-block");
+  });
+}
+// функция для удаленияподсветки, пробегаюсь по ктекам и удаляю у ним класс
+function clearLight() {
+  lightMoves.forEach((block) => {
+    block.classList.remove("active-block");
+  });
+  lightMoves = [];
+}
+// подсветка пешек
+function lightPawn(newCol, newRow) {
   const isBlack = figura.src.includes("black"); // определяю черная или белая фигура
   const direction = isBlack ? -1 : 1; // направление пешек
 
-  lightStep(newCol, newRow);
+  const firstStep =
+    (isBlack && currentCol === 7) || (!isBlack && currentCol === 2);
+
+  [-1, 1].forEach((dir) => {
+    const col = newCol + direction;
+    const row = newRow + dir;
+
+    const target = boardCell[col][row]?.querySelector("img");
+    if (target && target.src.includes(isBlack ? "white" : "black")) {
+      lightMoves.push(boardCell[col][row]);
+    }
+  });
+
+  if (boardCell[newCol + direction][newRow].querySelector("img")) return;
+
+  if (firstStep && boardCell[newCol + direction + direction][newRow]) {
+    lightMoves.push(boardCell[newCol + direction + direction][newRow]);
+  }
+  lightMoves.push(boardCell[newCol + direction][newRow]);
+}
+// логика ходов пешей
+function stepPawn(newCol, newRow) {
+  const isBlack = figura.src.includes("black"); // определяю черная или белая фигура
+  const direction = isBlack ? -1 : 1; // направление пешек
 
   // проверка первого хода пешки
   const firstStep =
     (isBlack && currentCol === 7) || (!isBlack && currentCol === 2);
 
-  // переменные для нахождения фигуры для съедения
-  const cutFuguraCol = currentCol + direction;
-  const cutFiguraRowRight = currentRow + 1;
-  const cutFiguraRowLeft = currentRow - 1;
-
-  // проверяю если новая позиция равна срезу фигуры по индексам, то нахожу клетку, потом фигуру в клетке,
-  // проверяю цвет, должен быть отличен он текущй фигуры, удалю и добавляю текущую фигуру на новое место
+  // проверяю если новая позиция равна по индексам, то нахожу клетку, потом фигуру в клетке,
+  // проверяю цвет, должен быть отличен он текущй фигуры, удаляю и добавляю текущую фигуру на новое место
   //удаляю активный класс и сбрасываю глобальное значение
-  if (
-    newCol === cutFuguraCol &&
-    (newRow === cutFiguraRowLeft || newRow === cutFiguraRowRight)
-  ) {
-    const figuraCut = boardCell[newCol][newRow].querySelector("img");
-    if (figuraCut && figuraCut.src.includes(isBlack ? "white" : "black")) {
-      figuraCut.remove();
-      boardCell[newCol][newRow].appendChild(figura);
-      figura.classList.remove("active-chess"); // удаляю активный класс
-      figura = null;
+  [-1, 1].forEach((dir) => {
+    const col = currentCol + direction; // столбец
+    const row = currentRow + dir; // строка с цифрами из цикла
+
+    if (newCol === col && newRow === row) {
+      const figuraCut = boardCell[newCol][newRow].querySelector("img");
+      if (figuraCut && figuraCut.src.includes(isBlack ? "white" : "black")) {
+        const copyFiguraCut = figuraCut.cloneNode()
+        addEatFigura(figuraCut.src.includes("black"), copyFiguraCut);
+        figuraCut.remove();
+        addInFiguraAndLight(newCol, newRow, figura);
+        stepToggle = !stepToggle;
+        updateText();
+        figura = null;
+      }
     }
-  }
+  });
+
+  if (boardCell[currentCol + direction][newRow].querySelector("img")) return; // проверка на занятость клетки фигурой
 
   // ход пешки; кликнутый столбец = текущему столбцу + направление
   // добавляю фигуру на новую клетку, удаляю активный класс
@@ -186,11 +418,165 @@ function stepPawn(newCol, newRow) {
       firstStep) ||
     (newCol === currentCol + direction && newRow === currentRow)
   ) {
-    boardCell[newCol][newRow].appendChild(figura); // добавляю фигуру на новую клетку
-    figura.classList.remove("active-chess"); // удаляю активный класс
-    currentCol = newCol;
-    currentRow = newRow;
+    addInFiguraAndLight(newCol, newRow, figura); // добавляю фигуру на новую клетку
     stepToggle = !stepToggle;
+    updateText();
     figura = null;
   }
+}
+
+// подсветка ладьи слона королевы
+function highLightMoves(direction) {
+  const isBlack = figura.src.includes("black");
+
+  direction.forEach((dir) => {
+    for (let i = 1; i <= 8; i++) {
+      const targetCol = currentCol + dir.col * i;
+      const targetRow = currentRow + dir.row * i;
+
+      if ((targetCol < 1 || targetCol > 8) && (targetRow < 1 || targetRow > 8))
+        break;
+
+      if (boardCell[targetCol]) {
+        if (boardCell[targetCol][targetRow]) {
+          const figuraInWay =
+            boardCell[targetCol][targetRow]?.querySelector("img");
+          // если фигура отлична от цвета фигуры то ее тоже подсвечиваю
+          if (
+            figuraInWay &&
+            figuraInWay.src.includes(isBlack ? "white" : "black")
+          ) {
+            lightMoves.push(boardCell[targetCol][targetRow]);
+          }
+
+          if (figuraInWay) break;
+
+          lightMoves.push(boardCell[targetCol][targetRow]);
+        }
+      }
+    }
+  });
+}
+
+// логика ладьи слона королевы
+function stepRookBishopQueen(newCol, newRow, direction) {
+  const isBlack = figura.src.includes("black");
+
+  // пробегаюсь по ходам в цикле и заворачиваю еще в один цикл для увелеичения ходов по всей доске
+  direction.forEach((dir) => {
+    for (let i = 1; i <= 8; i++) {
+      const targetCol = currentCol + dir.col * i; // ходы по колонке
+      const targetRow = currentRow + dir.row * i; // ходы по строке
+
+      // проверка выхода за границы доски
+      if ((targetCol < 1 || targetCol > 8) && (targetRow < 1 || targetRow > 8))
+        break;
+
+      // сама логика ходов; новая позиция должна быть равно цели и также со строкой
+      if (newCol === targetCol && newRow === targetRow) {
+        // нахожу изображение по новым координатам
+        const figuraCut = boardCell[newCol][newRow]?.querySelector("img");
+        // если фигура есть и она противоположного цвета, то срубить ее
+        if (figuraCut && figuraCut.src.includes(isBlack ? "white" : "black")) {
+          const copyFiguraCut = figuraCut.cloneNode();
+          addEatFigura(figuraCut.src.includes("black"), copyFiguraCut);
+          figuraCut.remove(); // удаляю фигуру
+          addInFiguraAndLight(newCol, newRow, figura); // добавляю фигуру
+          stepToggle = !stepToggle; // меняю ход
+          updateText()
+          figura = null; // обнуляю глобал переменную
+        } else {
+          addInFiguraAndLight(newCol, newRow, figura);
+          stepToggle = !stepToggle;
+          updateText()
+          figura = null;
+        }
+      }
+
+      // тк есть ораничение по границам, то проверяю существование и столбца и строки, получаю фигуру если она есть и сбрасываю для того, чтобы фигура не перепрыгивала через другие
+      if (boardCell[targetCol]) {
+        if (boardCell[targetCol][targetRow]) {
+          const figuraInWay =
+            boardCell[targetCol][targetRow]?.querySelector("img");
+          if (figuraInWay) break;
+        }
+      }
+    }
+  });
+}
+
+function highLightKnightKing(direction) {
+  const isBlack = figura.src.includes("black");
+
+  // пробегаюсь по ходам в цикле и заворачиваю еще в один цикл для увелеичения ходов по всей доске
+  for (const dir of direction) {
+    const targetCol = currentCol + dir.col; // ходы по колонке
+    const targetRow = currentRow + dir.row; // ходы по строке
+
+    // проверка выхода за границы доски
+    if ((targetCol < 1 || targetCol > 8) && (targetRow < 1 || targetRow > 8))
+      break;
+
+    if (boardCell[targetCol]) {
+      if (boardCell[targetCol][targetRow]) {
+        const figuraInWay =
+          boardCell[targetCol][targetRow]?.querySelector("img");
+
+        // если фигура отлична от цвета фигуры то ее тоже подсвечиваю
+        if (
+          figuraInWay &&
+          figuraInWay.src.includes(isBlack ? "white" : "black")
+        ) {
+          lightMoves.push(boardCell[targetCol][targetRow]);
+        }
+        // если клеткая пустая, то подсвечиваю
+        if (!figuraInWay) {
+          lightMoves.push(boardCell[targetCol][targetRow]);
+        }
+      }
+    }
+  }
+}
+
+function stepKnightKing(newCol, newRow, direction) {
+  const isBlack = figura.src.includes("black");
+
+  // пробегаюсь по ходам в цикле и заворачиваю еще в один цикл для увелеичения ходов по всей доске
+  for (const dir of direction) {
+    const targetCol = currentCol + dir.col; // ходы по колонке
+    const targetRow = currentRow + dir.row; // ходы по строке
+
+    // проверка выхода за границы доски
+    if ((targetCol < 1 || targetCol > 8) && (targetRow < 1 || targetRow > 8))
+      break;
+
+    if (newCol === targetCol && newRow === targetRow) {
+      // сама логика ходов; новая позиция должна быть равно цели и также со строкой
+      // нахожу изображение по новым координатам
+      const figuraCut = boardCell[newCol][newRow]?.querySelector("img");
+      // если фигура есть и она противоположного цвета, то срубить ее
+      if (figuraCut && figuraCut.src.includes(isBlack ? "white" : "black")) {
+        const copyFiguraCut = figuraCut.cloneNode();
+        addEatFigura(figuraCut.src.includes("black"), copyFiguraCut);
+        figuraCut.remove(); // удаляю фигуру
+        addInFiguraAndLight(newCol, newRow, figura); // добавляю фигуру
+        stepToggle = !stepToggle; // меняю ход
+        updateText();
+        figura = null; // обнуляю глобал переменную
+      } else {
+        addInFiguraAndLight(newCol, newRow, figura);
+        stepToggle = !stepToggle;
+        updateText();
+        figura = null;
+      }
+    }
+  }
+}
+// добавление фигуры на клетку; удаление класса; обновление глобальных переменных
+function addInFiguraAndLight(col, row, figura) {
+  boardCell[col][row].appendChild(figura);
+  figura.classList.remove("active-chess"); // удаляю активный класс
+  currentCol = col;
+  currentRow = row;
+  
 }

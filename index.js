@@ -324,7 +324,6 @@ function logicRookBishopQueen(
   isBlack,
   directionRook
 ) {
-  const startStr = currentPosition / 8; // начальная строка, чтобы не вызалить за границу
   // пробегаюсь по ходам
   for (const dir of directionRook) {
     for (let i = 1; i <= 8; i++) {
@@ -332,10 +331,6 @@ function logicRookBishopQueen(
       // console.log(targetPosition, currentPosition, dir, i);
 
       if (targetPosition < 0 || targetPosition > blocks.length) break; // проверка выхода за линию
-      // проверка на выход за линию
-      // if (dir !== -8 && dir !== 8) {
-      //   if (Math.floor(startStr) !== Math.floor(targetPosition / 8)) break;
-      // }
 
       // проверяю занята ли клетка другой фигурой
       if (blocks[targetPosition]?.querySelector("img")) {
