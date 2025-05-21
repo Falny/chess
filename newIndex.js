@@ -20,17 +20,30 @@ let currentRow = null;
 
 let lightMoves = []; // для сбора подсвтеки ходов
 
+// добавляю алфиват и нумерацию на доску
+// for (let i = 1; i <= 8; i++){
+//   const newSpanAlpha = document.createElement('span')
+//   const newSpanNum = document.createElement("span");
+
+//   newSpanAlpha.textContent = String.fromCharCode(64 + i)
+//   newSpanNum.textContent = i
+
+//   textAlpha.appendChild(newSpanAlpha)
+//   textNum.appendChild(newSpanNum)
+
+// }
+
 //для добавления съеденых фигур
 function addEatFigura(pathBoolean, figura) {
   if (pathBoolean) {
-    blackChess.appendChild(figura)
+    blackChess.appendChild(figura);
   } else {
     whiteChess.appendChild(figura);
   }
 }
 // смена текста
 function updateText() {
-  text.textContent = `Ходят ${stepToggle ? 'белые' : 'черные'}`
+  text.textContent = `Ходят ${stepToggle ? "белые" : "черные"}`;
 }
 updateText();
 
@@ -58,6 +71,21 @@ for (let y = 1; y <= 8; y++) {
       block.classList.add("block-white");
     } else {
       block.classList.add("block-black");
+    }
+
+    // добавляю цифры на доску
+    if (x === 1) {
+      const newNum = document.createElement("span");
+      newNum.classList.add("block-index");
+      newNum.textContent = y;
+      block.appendChild(newNum);
+    }
+
+    if (y === 1) {
+      const newChar = document.createElement("span");
+      newChar.classList.add("block-char");
+      newChar.textContent = String.fromCharCode(64 + x);
+      block.appendChild(newChar);
     }
 
     board.append(block); //добавляю клетку на доску
@@ -139,19 +167,21 @@ boardCell.forEach((blocks, indexColumn) => {
       // для выбора новой фигуры того же цвета
       if (figura && cell.firstChild) {
         const newFigura = cell.querySelector("img");
-        const currentColor = newFigura.src.includes("black"); // текущий цвет фигуры
-        if (
-          newFigura.src.includes(currentColor) ===
-          figura.src.includes(currentCol)
-        ) {
-          if (currentColor != stepToggle) {
-            figura.classList.remove("active-chess");
-            newFigura.classList.add("active-chess"); //добавляю класс к фигуре
-            figura = newFigura;
-            currentCol = newCol;
-            currentRow = newRow;
+        if (newFigura) {
+          const currentColor = newFigura.src.includes("black"); // текущий цвет фигуры
+          if (
+            newFigura.src.includes(currentColor) ===
+            figura.src.includes(currentCol)
+          ) {
+            if (currentColor != stepToggle) {
+              figura.classList.remove("active-chess");
+              newFigura.classList.add("active-chess"); //добавляю класс к фигуре
+              figura = newFigura;
+              currentCol = newCol;
+              currentRow = newRow;
 
-            logicOnClick(newFigura, newCol, newRow);
+              logicOnClick(newFigura, newCol, newRow);
+            }
           }
         }
       }
@@ -159,17 +189,20 @@ boardCell.forEach((blocks, indexColumn) => {
       // проврека содержания фигуры и добавление в глобаные переменные для сохранения
       if (!figura && cell.firstChild) {
         const img = cell.querySelector("img");
-        const currentColor = img.src.includes("black"); // текущий цвет фигуры
 
-        // проверка хода
-        if (currentColor !== stepToggle) {
-          // проверка текущего цвета и цвета, который ходит
-          img.classList.add("active-chess"); //добавляю класс к фигуре
-          figura = img;
-          currentCol = newCol;
-          currentRow = newRow;
+        if (img) {
+          const currentColor = img.src.includes("black"); // текущий цвет фигуры
 
-          logicOnClick(figura, newCol, newRow);
+          // проверка хода
+          if (currentColor !== stepToggle) {
+            // проверка текущего цвета и цвета, который ходит
+            img.classList.add("active-chess"); //добавляю класс к фигуре
+            figura = img;
+            currentCol = newCol;
+            currentRow = newRow;
+
+            logicOnClick(figura, newCol, newRow);
+          }
         }
       }
 
@@ -245,19 +278,7 @@ boardCell.forEach((blocks, indexColumn) => {
         }
 
         if (figura?.src.includes("king")) {
-          stepKnightKing( 
-            newCol, newRow,
-            (direction = [
-              { col: -1, row: 1 },
-              { col: 1, row: 1 },
-              { col: 1, row: -1 },
-              { col: -1, row: -1 },
-              { col: 1, row: 0 },
-              { col: -1, row: 0 },
-              { col: 0, row: 1 },
-              { col: 0, row: -1 },
-            ])
-          );
+          King(newCol, newRow);
         }
       }
     });
@@ -396,7 +417,7 @@ function stepPawn(newCol, newRow) {
     if (newCol === col && newRow === row) {
       const figuraCut = boardCell[newCol][newRow].querySelector("img");
       if (figuraCut && figuraCut.src.includes(isBlack ? "white" : "black")) {
-        const copyFiguraCut = figuraCut.cloneNode()
+        const copyFiguraCut = figuraCut.cloneNode();
         addEatFigura(figuraCut.src.includes("black"), copyFiguraCut);
         figuraCut.remove();
         addInFiguraAndLight(newCol, newRow, figura);
@@ -483,12 +504,12 @@ function stepRookBishopQueen(newCol, newRow, direction) {
           figuraCut.remove(); // удаляю фигуру
           addInFiguraAndLight(newCol, newRow, figura); // добавляю фигуру
           stepToggle = !stepToggle; // меняю ход
-          updateText()
+          updateText();
           figura = null; // обнуляю глобал переменную
         } else {
           addInFiguraAndLight(newCol, newRow, figura);
           stepToggle = !stepToggle;
-          updateText()
+          updateText();
           figura = null;
         }
       }
@@ -578,5 +599,138 @@ function addInFiguraAndLight(col, row, figura) {
   figura.classList.remove("active-chess"); // удаляю активный класс
   currentCol = col;
   currentRow = row;
+}
+
+// дальше только реализация короля и его логики
+function King(newCol, newRow) {
+  direction = [
+    { col: -1, row: 1 },
+    { col: 1, row: 1 },
+    { col: 1, row: -1 },
+    { col: -1, row: -1 },
+    { col: 1, row: 0 },
+    { col: -1, row: 0 },
+    { col: 0, row: 1 },
+    { col: 0, row: -1 },
+  ];
+
+  const isBlack = figura.src.includes("black");
+
+  for (const dir of direction) {
+    const targetCol = currentCol + dir.col;
+    const targetRow = currentRow + dir.row;
+
+    if ((targetCol < 1 || targetCol > 8) && (targetRow < 1 || targetRow > 8))
+      break;
+
+    if (
+      newCol === targetCol &&
+      newRow === targetRow &&
+      !checkInKing(targetCol, targetRow, isBlack)
+    ) {
+      const figuraCut = boardCell[newCol][newRow]?.querySelector("img");
+      // если фигура есть и она противоположного цвета, то срубить ее
+      if (figuraCut && figuraCut.src.includes(isBlack ? "white" : "black")) {
+        const copyFiguraCut = figuraCut.cloneNode();
+        addEatFigura(figuraCut.src.includes("black"), copyFiguraCut);
+        figuraCut.remove(); // удаляю фигуру
+        addInFiguraAndLight(newCol, newRow, figura); // добавляю фигуру
+        stepToggle = !stepToggle; // меняю ход
+        updateText();
+        figura = null; // обнуляю глобал переменную
+      } else {
+        addInFiguraAndLight(newCol, newRow, figura);
+        stepToggle = !stepToggle;
+        updateText();
+        figura = null;
+      }
+    }
+  }
+}
+
+function checkInKing(kingCol, kingRow, isBlack) {
+  for (let y = 1; y <= 8; y++) {
+    for (let x = 1; x <= 8; x++) {
+      const chess = boardCell[y][x].querySelector("img"); // нахожу все фигуры
+      if (chess && chess.src.includes(isBlack ? "black" : "white")) break; // если они того же цвета что и король выхожу из цикла
+
+      let canAttack = false;
+      if (chess?.src.includes("pawn")) {
+        canAttack = canAttackPawn(y, x, kingCol, kingRow, isBlack);
+      } else if (chess?.src.includes("rook")) {
+        canAttack = canAttackRook(y, x, kingCol, kingRow);
+      } else if (chess?.src.includes("bishop")) {
+        canAttack = canAttackBishop(y, x, kingCol, kingRow, isBlack);
+      } else if (chess?.src.includes("queen")) {
+        canAttack =
+          canAttackRook(y, x, kingCol, kingRow) ||
+          canAttackBishop(y, x, kingCol, kingRow, isBlack);
+      } else if (chess?.src.includes("knight")) {
+        canAttack = canAttackKnight(y, x, kingCol, kingRow, isBlack);
+      }
+
+      if (canAttack) return true;
+    }
+  }
+  return false;
+}
+
+function canAttackPawn(y, x, kingCol, kingRow, isBlack) {
+  const direction = isBlack ? 1 : -1;
+  return kingCol === y + direction && (kingRow === x + 1 || kingRow === x - 1);
+}
+
+function canAttackRook(y, x, kingCol, kingRow) {
+  // если колонки равны то смотрим строки на наличии преград
+  if (y === kingCol) {
+    const step = x < kingRow ? 1 : -1; // ход; если ладья выше короля то прибавляем и наоборот
+    for (let row = x + step; row != kingRow; row += step) {
+      // пробагаюсь в цикле по строке с прибавлением хода
+      if (row < 1 || row > 8) break; // выход за границы
+      const img = boardCell[y][row].querySelector("img"); // нахожу изображение
+      if (img) return false; // если оно сущестует и не является королем то пропускаем
+    }
+    return true;
+  }
+
+  if (x === kingRow) {
+    const step = y < kingCol ? 1 : -1;
+    for (let col = y + step; col !== kingCol; col += step) {
+      if (col < 1 || col > 8) break;
+      const img = boardCell[col][x].querySelector("img");
+      if (img) return false;
+    }
+    return true;
+  }
+}
+
+function canAttackBishop(y, x, kingCol, kingRow, isBlack) {
+  const stepCol = y < kingCol ? 1 : -1;
+  const stepRow = x < kingRow ? 1 : -1;
+
+  for (let i = 1; i <= 8; i++) {
+    const col = y + stepCol * i;
+    const row = x + stepRow * i;
+
+    // Проверка границ доски
+    if (col < 1 || col > 8 || row < 1 || row > 8) break;
+
+    if (col === kingCol && row === kingRow) {
+      return true;
+    }
+
+    const img = boardCell[col][row].querySelector("img");
+    if (img) {
+      if (img.src.includes(isBlack ? "black" : "white")) {
+        continue;
+      }
+      return false;
+    }
+  }
+
+  return false;
+}
+
+function canAttackKnight(y, x, kingCol, kingRow, isBlack) {
   
 }

@@ -34,18 +34,19 @@ body {
   font-weight: 600;
 }
 
-.block-index {
+.block-char {
   position: absolute;
-  top: 20px;
-  right: -20px;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
   font-size: 25px;
 }
 
-.block-char {
+.block-index {
   position: absolute;
-  top: -35px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: -25px;
+  top: 50%;
+  transform: translatey(-50%);
   font-size: 25px;
 }
 
@@ -78,11 +79,14 @@ body {
   right: 5%;
 }
 
+
+
 @media (max-width: 1300px) {
   .block {
     width: 60px;
     height: 60px;
   }
+
 }
 
 @media (max-width: 1000px) {
@@ -90,4 +94,6 @@ body {
     width: 50px;
     height: 50px;
   }
+
+ 
 }
