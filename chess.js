@@ -11,6 +11,51 @@ chesses.forEach((chess) => {
   });
 });
 
+const direction = {
+  knight: [
+    { col: 2, row: 1, chess: "knight" },
+    { col: 2, row: -1, chess: "knight" },
+    { col: -2, row: 1, chess: "knight" },
+    { col: -2, row: -1, chess: "knight" },
+    { col: 1, row: 2, chess: "knight" },
+    { col: -1, row: 2, chess: "knight" },
+    { col: 1, row: -2, chess: "knight" },
+    { col: -1, row: -2, chess: "knight" },
+  ],
+  king: [
+    { col: -1, row: 1, chess: "king" },
+    { col: 1, row: 1, chess: "king" },
+    { col: 1, row: -1, chess: "king" },
+    { col: -1, row: -1, chess: "king" },
+    { col: 1, row: 0, chess: "king" },
+    { col: -1, row: 0, chess: "king" },
+    { col: 0, row: 1, chess: "king" },
+    { col: 0, row: -1, chess: "king" },
+  ],
+  queen: [
+    { col: -1, row: 1 },
+    { col: 1, row: 1 },
+    { col: 1, row: -1 },
+    { col: -1, row: -1 },
+    { col: 1, row: 0 },
+    { col: -1, row: 0 },
+    { col: 0, row: 1 },
+    { col: 0, row: -1 },
+  ],
+  bishop: [
+    { col: -1, row: 1, chess: "bishop" },
+    { col: 1, row: 1, chess: "bishop" },
+    { col: 1, row: -1, chess: "bishop" },
+    { col: -1, row: -1, chess: "bishop" },
+  ],
+  rook: [
+    { col: 1, row: 0, chess: "rook" },
+    { col: -1, row: 0, chess: "rook" },
+    { col: 0, row: 1, chess: "rook" },
+    { col: 0, row: -1, chess: "rook" },
+  ],
+};
+
 const initialBoard = [
   [
     "black-rook",
@@ -65,64 +110,161 @@ const initialState = {
   hightLight: [],
 };
 
-function isValid(step, figuraStep, figura) {
-  const { y, x } = figuraStep;
+function handleNutureCell() {
+  initialState.hightLight.map((coord) => {
+    const cell = document.querySelector(
+      `.block[data-y="${coord.y}"][data-x="${coord.x}"]`
+    );
+    cell && cell.classList.add("active-block");
+  });
+}
+
+function isLight(currentStep) {
+  const { y, x } = currentStep;
+  const figura = initialState.board[y][x];
+
   if (figura.includes("pawn")) {
     const direction = initialState.currentStep === "white" ? -1 : 1;
 
     const firstStep = y === 6 || y === 1;
 
-    // [-1, 1].forEach(dir => {
-    //   const col = y + direction;
-    //   const row = x + dir
+    for (let dir of [-1, 1]) {
+      const col = y + direction;
+      const row = x + dir;
 
-    //   if ()
-    // })
+      const chess = initialState.board[col][row];
+      if (chess && !chess.includes(initialState.currentStep)) {
+        initialState.hightLight.push({ y: col, x: row });
+      }
+    }
 
-    console.log(figuraStep, figura, step, direction);
-    if (
-      (step.y === y + direction * 2 && x === step.x && firstStep) ||
-      (step.y === y + direction && x === step.x)
-    )
-      return true;
+    if (firstStep) {
+      initialState.hightLight.push({ y: y + direction + direction, x: x });
+    }
+    initialState.hightLight.push({ y: y + direction, x: x });
   }
+
+  if (figura.includes("rook")) {
+    const direction = [
+      { col: 1, row: 0 },
+      { col: -1, row: 0 },
+      { col: 0, row: 1 },
+      { col: 0, row: -1 },
+    ];
+
+    for (let dir of direction) {
+      for (let i = 1; i <= 7; i++) {
+        const col = y + dir.col * i;
+        const row = x + dir.row * i;
+
+        if (col < 0 || col > 7 || row < 0 || row > 7) break;
+
+        const chess = initialState.board[col][row];
+
+        if (!chess) {
+          initialState.hightLight.push({ y: col, x: row });
+        } else {
+          if (chess && !chess.includes(initialState.currentStep)) {
+            initialState.hightLight.push({ y: col, x: row });
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  handleNutureCell();
 }
 
-function moveChess(step, figuraStep) {
-  if (!figuraStep) return;
-  const chess = initialState.board[figuraStep.y][figuraStep.x];
-  if (!chess) return;
+// function isValid(futureStep, currentStep, figura) {
+//   const { y, x } = currentStep;
+//   if (figura.includes("pawn")) {
+//     const direction = initialState.currentStep === "white" ? -1 : 1;
 
-  if (isValid(step, figuraStep, chess)) {
-    console.log("puk");
-    initialState.board[step.y][step.x] = chess;
-    initialState.board[figuraStep.y][figuraStep.x] = "";
-    initialState.currentChess = null;
-    initialState.currentStep =
-      initialState.currentStep === "white" ? "black" : "white";
+//     const firstStep = y === 6 || y === 1;
 
-    renderBoard();
-  }
+//     for (let dir of [-1, 1]) {
+//       const col = y + direction;
+//       const row = x + dir;
+
+//       if (futureStep.y === col && futureStep.x === row) {
+//         const chess = initialState.board[col][row];
+//         if (chess && !chess.includes(initialState.currentStep)) {
+//           return true;
+//         }
+//       }
+//     }
+
+//     if (
+//       (futureStep.y === y + direction * 2 && x === futureStep.x && firstStep) ||
+//       (futureStep.y === y + direction && x === futureStep.x)
+//     )
+//       return true;
+//   }
+
+//   const isOneStep = figura.includes("knight") || figura.includes("king");
+
+//   Object.entries(direction).map(([i, direct]) => {
+//     if (figura.includes(i)) {
+//       for (let dir of direct) {
+//         const maxStep = isOneStep ? 1 : 8;
+
+//         for (let i = 0; i < maxStep; i++) {
+//           const col = y + dir.col * i;
+//           const row = x + dir.row * i;
+
+//           if ((col < 1 || col > 8) && (row < 1 || row > 8)) break;
+
+//           if (futureStep.y === col && futureStep.x === row) {
+//             const chess = initialState.board[col][row];
+//             if (chess && !chess.includes(initialState.currentStep)) return true;
+//           }
+//         }
+//       }
+//     }
+//   });
+// }
+
+function moveChess(futureStep, currentStep) {
+  if (!currentStep) return;
+  const chess = initialState.board[currentStep.y][currentStep.x];
+
+  initialState.hightLight.map((coord) => {
+    if (coord.y === futureStep.y && coord.x === futureStep.x) {
+      initialState.board[futureStep.y][futureStep.x] = "";
+      initialState.board[futureStep.y][futureStep.x] = chess;
+      initialState.board[currentStep.y][currentStep.x] = "";
+      initialState.currentChess = null;
+      initialState.hightLight = [];
+      initialState.currentStep =
+        initialState.currentStep === "white" ? "black" : "white";
+
+      renderBoard();
+    }
+  });
 }
 
 function handlerClick(x, y) {
   document.querySelectorAll("img").forEach((chess) => {
     chess.classList.remove("active-chess");
   });
+
   const chess = initialState.board[y][x];
 
-  if (chess) {
+  if (chess.includes(initialState.currentStep)) {
     const cell = document.querySelector(`.block[data-y="${y}"][data-x="${x}"]`);
     const domChess = cell.querySelector("img");
+    domChess.classList.add("active-chess");
+    initialState.currentChess = { y, x };
 
-    if (domChess.src.includes(initialState.currentStep)) {
-      domChess.classList.add("active-chess");
-      initialState.currentChess = { y, x };
-    }
+    isLight(initialState.currentChess);
   } else {
-    const figuraStep = initialState.currentChess;
-    const step = { y, x };
-    moveChess(step, figuraStep);
+    const currentStep = initialState.currentChess;
+    const futureStep = { y, x };
+
+    moveChess(futureStep, currentStep);
+
+    renderBoard();
   }
 }
 
