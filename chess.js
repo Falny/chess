@@ -293,6 +293,20 @@ function checkKing() {
   });
 }
 
+function TextWin() {
+  const win = document.createElement("div");
+  const winText = document.createElement("p");
+  winText.textContent = `Выйграли ${
+    initialState.currentStep === "white" ? "черные" : "белые"
+  }.
+    Если хотите сыграть еще раз, обновите страницу.
+    `;
+  win.classList.add("win");
+  winText.classList.add("win-text");
+  win.appendChild(winText);
+  document.body.appendChild(win);
+}
+
 // функции проверки короля на шах и мат также логика выйгрыша
 function checkEatKing() {
   checkPawn();
@@ -303,23 +317,12 @@ function checkEatKing() {
   checkKing();
 
   if (initialState.hightLight.length === 0) {
-    const win = document.createElement("div");
-    const winText = document.createElement("p");
-    winText.textContent = `Выйграли ${
-      initialState.currentStep === "white" ? "черные" : "белые"
-    }.
-    Если хотите сыграть еще раз, обновите страницу.
-    `;
-    win.classList.add("win");
-    winText.classList.add("win-text");
-    win.appendChild(winText);
-    document.body.appendChild(win);
+    TextWin();
   }
 }
-
 // для добавление класса подсвеченным клеткам
 function handleNutureCell() {
-  // пробегаюсь по клеткам и добавляю им подсветку 
+  // пробегаюсь по клеткам и добавляю им подсветку
   initialState.hightLight.map((coord) => {
     const cell = document.querySelector(
       `.block[data-y="${coord.y}"][data-x="${coord.x}"]`
@@ -328,7 +331,7 @@ function handleNutureCell() {
   });
 }
 
-// сама подстветка 
+// сама подстветка
 function isLight(currentStep) {
   const { y, x } = currentStep;
   const figura = initialState.board[y][x];
@@ -590,10 +593,28 @@ function moveChess(futureStep, currentStep) {
     }
   });
 
+  // проврека на выйгрыш если не осталось фигур
+  if (blackChess.children.length === 16 || whiteChess.children.length === 16) {
+    TextWin();
+  }
+  // проверка на выйгрыш если съели короля
+  for (let i of blackChess.children) {
+    if (i.src.includes("king")) {
+      TextWin();
+      return;
+    }
+  }
+  for (let i of whiteChess.children) {
+    if (i.src.includes("king")) {
+      TextWin();
+      return;
+    }
+  }
+
   renderBoard();
 }
 
-// логика клика на фигуру и пустую клетку 
+// логика клика на фигуру и пустую клетку
 function handlerClick(x, y) {
   // при клике удаляю класс с поднятием фигуры
   document.querySelectorAll("img").forEach((chess) => {
@@ -602,7 +623,7 @@ function handlerClick(x, y) {
 
   const chess = initialState.board[y][x];
 
-  // если фигура есть и она цвета который ходит то добавляю ей активный класс; добавляю координаты фигуры 
+  // если фигура есть и она цвета который ходит то добавляю ей активный класс; добавляю координаты фигуры
   if (chess.includes(initialState.currentStep)) {
     const cell = document.querySelector(`.block[data-y="${y}"][data-x="${x}"]`);
     const domChess = cell.querySelector("img");
@@ -610,7 +631,7 @@ function handlerClick(x, y) {
     initialState.currentChess = { y, x };
     initialState.hightLight = []; // обнуляю массив с подстветкой (потому что если нажимать на фигуры то подсвтека не убирается)
     renderBoard(); // рендерю доску чтобы отображалась текущая подсвтека
-    isLight(initialState.currentChess); // проверяю подсвтеку 
+    isLight(initialState.currentChess); // проверяю подсвтеку
   } else {
     // если фигура уже есть то получаю координаты другой любой клетку и отправляю все в локигу хода
     const currentStep = initialState.currentChess;
